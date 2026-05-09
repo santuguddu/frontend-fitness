@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import formclasses from './FormContact.module.css';
 
-const Input = props => {
+const Input = (props) => {
 	return (
 		<div className={formclasses.controls}>
 			<input
@@ -13,6 +13,7 @@ const Input = props => {
 				value={props.value}
 				onChange={props.onChange}
 				placeholder={props.placeholder}
+				required
 			/>
 			<div id='spinner' className={formclasses.spinner}></div>
 		</div>
@@ -26,19 +27,23 @@ const FormContact = () => {
 		message: '',
 	});
 
-	const handleChange = e => {
+	const [loading, setLoading] = useState(false);
+
+	const handleChange = (e) => {
 		setFormData({
 			...formData,
 			[e.target.name]: e.target.value,
 		});
 	};
 
-	const handleSubmit = async e => {
+	const handleSubmit = async (e) => {
 		e.preventDefault();
+
+		setLoading(true);
 
 		try {
 			const response = await fetch(
-				'http://localhost:5000/api/contact',
+				'https://fitness-website-1-uze3.onrender.com/api/contact',
 				{
 					method: 'POST',
 					headers: {
@@ -50,25 +55,30 @@ const FormContact = () => {
 
 			const data = await response.json();
 
-			if (data.success) {
-				alert('Message Sent Successfully');
+			if (response.ok && data.success) {
+				alert('Message Sent Successfully ✅');
 
 				setFormData({
 					name: '',
 					email: '',
 					message: '',
 				});
+			} else {
+				alert(data.message || 'Failed to send message');
 			}
 		} catch (error) {
-			console.log(error);
-			alert('Something went wrong');
+			console.error(error);
+			alert('Server error. Please try again later.');
+		} finally {
+			setLoading(false);
 		}
 	};
 
 	return (
 		<form
 			className={formclasses['login-form']}
-			onSubmit={handleSubmit}>
+			onSubmit={handleSubmit}
+		>
 			<div className={formclasses.inputdiv}>
 				<Input
 					placeholder='Name'
@@ -92,13 +102,16 @@ const FormContact = () => {
 					name='message'
 					value={formData.message}
 					onChange={handleChange}
+					required
 				/>
 			</div>
 
 			<button
 				className={formclasses.control}
-				type='submit'>
-				JOIN NOW
+				type='submit'
+				disabled={loading}
+			>
+				{loading ? 'Sending...' : 'JOIN NOW'}
 			</button>
 		</form>
 	);
